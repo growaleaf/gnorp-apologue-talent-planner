@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>(the) Gnorp Apologue — Talent Point Build Browser</title>
+<meta name="description" content="Every talent in (the) Gnorp Apologue, grouped by point tier, with named community builds highlighted and a running point counter — so you know what a talent does before you spend the point.">
+<style>
+  :root {
+    --bg: #15131a;
+    --panel: #201d29;
+    --panel-border: #39334a;
+    --ink: #e7e3ee;
+    --ink-dim: #a39bb3;
+    --accent: #6f5fae;
+    --accent-bright: #a08ce8;
+    --field-bg: #0f0d14;
+    --warn: #c2874f;
+    --ok: #7fae8f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; border-bottom: 1px solid var(--panel-border); padding-bottom: 16px; }
+  .sub { color: var(--ink-dim); font-size: 0.93rem; margin: 0 0 20px; }
+  .callout {
+    font-size: 0.85rem; color: var(--ink-dim); background: var(--field-bg);
+    border: 1px solid var(--panel-border); border-radius: 4px; padding: 12px 14px; margin: 0 0 20px;
+  }
+  .callout strong { color: var(--ink); }
+  .callout.warn { border-color: var(--warn); }
+  section {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 6px;
+    padding: 20px 22px; margin-bottom: 20px;
+  }
+  section h2 { font-size: 1.1rem; margin: 0 0 6px; }
+  .section-note { color: var(--ink-dim); font-size: 0.85rem; margin: 0 0 16px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .controls label { font-size: 0.78rem; color: var(--ink-dim); display: flex; align-items: center; gap: 6px; }
+  .controls select, .controls input[type="text"] {
+    background: var(--field-bg); color: var(--ink); border: 1px solid var(--panel-border);
+    border-radius: 4px; padding: 5px 8px; font-size: 0.82rem;
+  }
+  .counter-bar {
+    position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 14px;
+    align-items: center; background: var(--field-bg); border: 1px solid var(--accent);
+    border-radius: 6px; padding: 10px 16px; margin: 0 0 20px; font-size: 0.85rem;
+  }
+  .counter-bar .big { font-size: 1.3rem; font-weight: 700; color: var(--accent-bright); }
+  .counter-bar button {
+    background: transparent; color: var(--ink-dim); border: 1px solid var(--panel-border);
+    border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer;
+  }
+  .counter-bar button:hover { color: var(--ink); border-color: var(--accent-bright); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  table th, table td { border: 1px solid var(--panel-border); padding: 7px 9px; text-align: left; vertical-align: top; }
+  table th {
+    color: var(--ink-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.02em;
+    background: var(--field-bg); white-space: nowrap;
+  }
+  td.pick { text-align: center; width: 30px; }
+  td.name { white-space: nowrap; font-weight: 600; }
+  td.tier { white-space: nowrap; color: var(--ink-dim); }
+  tr.highlighted { background: rgba(160, 140, 232, 0.12); }
+  tr.highlighted td.name { color: var(--accent-bright); }
+  .build-chip {
+    display: inline-block; font-size: 0.68rem; padding: 1px 6px; border-radius: 3px;
+    margin: 0 4px 2px 0; border: 1px solid var(--panel-border); color: var(--ink-dim);
+  }
+  .build-section { margin-bottom: 14px; }
+  .build-section h3 { font-size: 0.95rem; margin: 0 0 4px; color: var(--accent-bright); }
+  .build-meta { font-size: 0.78rem; color: var(--ink-dim); margin: 0 0 6px; }
+  .build-meta a { color: var(--accent-bright); }
+  .gap-label {
+    display: inline-block; font-size: 0.72rem; padding: 1px 6px; border-radius: 3px;
+    border: 1px solid var(--warn); color: var(--warn); margin-left: 6px;
+  }
+  .sources-section { font-size: 0.82rem; color: var(--ink-dim); }
+  .sources-section h2 { font-size: 1.05rem; }
+  .sources-section a { color: var(--accent-bright); }
+  .self-test { font-size: 0.75rem; color: var(--ink-dim); margin-top: 10px; }
+  .self-test.ok { color: var(--accent-bright); }
+  .self-test.bad { color: var(--warn); }
+  footer { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; font-size: 0.8rem; color: var(--ink-dim); }
+  footer a { color: var(--accent-bright); }
+  .row-count { font-size: 0.78rem; color: var(--ink-dim); margin-left: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>(the) Gnorp Apologue — Talent Point Build Browser</h1>
+  <p class="sub">Every talent for
+  <a href="https://gnorp.wiki.gg/" target="_blank" rel="noopener">(the) Gnorp Apologue</a>
+  in one table, grouped by the point tier it unlocks at, with named community builds highlighted.
+  This is a lookup, not a verdict generator: no tier list or ranking language anywhere in the
+  shipped copy. Tick talents as you plan a build — the counter below sums what you've ticked.
+  Nothing here is saved or sent anywhere — it runs entirely in your browser.</p>
+
+  <div class="callout warn" id="dataNotice"></div>
+
+  <div class="counter-bar">
+    <span>Points ticked: <span class="big" id="pointsTicked">0</span></span>
+    <span id="nextTierHint"></span>
+    <button id="clearPicks" type="button">Clear picks</button>
+  </div>
+
+  <section>
+    <h2>Talents</h2>
+    <p class="section-note">Tick a talent to add it to your running plan. Search by name, filter by
+    point tier, or highlight a named community build to see which rows it uses. Default talents
+    (tier "Default") need zero Talent Points and are not counted toward the running total below.</p>
+    <div class="controls">
+      <label>Search name
+        <input type="text" id="nameFilter" placeholder="e.g. Modern Warfare, Frostfire…">
+      </label>
+      <label>Point tier
+        <select id="tierFilter">
+          <option value="">All tiers</option>
+          <option value="0">Default</option>
+          <option value="2">2 Talent Points</option>
+          <option value="5">5 Talent Points</option>
+          <option value="8">8 Talent Points</option>
+          <option value="11">11 Talent Points</option>
+          <option value="14">14 Talent Points</option>
+          <option value="17">17 Talent Points</option>
+        </select>
+      </label>
+      <label>Highlight build
+        <select id="buildFilter">
+          <option value="">No build highlighted</option>
+        </select>
+      </label>
+      <span class="row-count" id="rowCount"></span>
+    </div>
+    <table id="talentTable">
+      <thead>
+        <tr>
+          <th>Pick</th>
+          <th>Talent</th>
+          <th>Point tier</th>
+          <th>Effect (as sourced from the wiki)</th>
+        </tr>
+      </thead>
+      <tbody id="talentBody"></tbody>
+    </table>
+  </section>
+
+  <section id="buildsSection">
+    <h2>Named community builds</h2>
+    <p class="section-note">These are community-written builds found while researching this page,
+    attributed to their source. They are quoted community labels, not this product's own
+    recommendation — select one above to highlight its talents in the table.</p>
+    <div id="buildsList"></div>
+  </section>
+
+  <section class="sources-section">
+    <h2>Sources &amp; disclosed gaps</h2>
+    <p class="verified">Fetched and cross-checked directly <span id="fetchedDate"></span>.</p>
+    <ul id="sourceList"></ul>
+    <p><strong>Disclosed gap — which talent is "free":</strong> each point tier above Default
+    contains 6 talents: 5 regular (cost 1 Talent Point each to apply) and 1 free (always active
+    once the tier unlocks, no point cost). The wiki describes this structure but never names which
+    specific talent in a tier is the free one<span class="gap-label">not stated</span> — so every
+    talent above is shown as a 1-point pick, including whichever one is actually free for you. If
+    you've ticked your tier's actual free talent, your true cost for that tier is 1 point lower
+    than the counter shows.</p>
+    <p><strong>Disclosed gap — overall maximum points:</strong> the wiki states the last unlock
+    threshold is 17 Talent Points, but does not state any ceiling on how many Talent Points exist
+    or can be earned in total<span class="gap-label">not stated</span>. 17 is where the last
+    GROUP unlocks, not a hard stop on how many points you can keep collecting afterward.</p>
+    <p>Not built: any claim about which talent in a tier is free, and any overall maximum
+    point total — both undisclosed by the source, both left unguessed here.</p>
+    <p class="self-test" id="selfTest">running self-test…</p>
+  </section>
+</main>
+
+<footer>
+  Fan-made reference tool, unaffiliated with the developers of (the) Gnorp Apologue. Talent data
+  cross-checked directly against gnorp.wiki.gg as of 2026-10-31. Community builds are attributed
+  to their source and are not this product's own verdict. No account, no server, no data leaves
+  your browser.
+</footer>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+  var D = window.GNORP_TALENT_DATA;
+  var filters = { name: "", tier: "", build: "" };
+  var picked = {};
+
+  function textNode(tag, cls, text) {
+    var el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined && text !== null) el.textContent = text;
+    return el;
+  }
+
+  function buildByName(name) {
+    return D.BUILDS.filter(function (b) { return b.name === name; })[0];
+  }
+
+  function matchesFilters(talent) {
+    if (filters.tier !== "" && String(talent.tier) !== filters.tier) return false;
+    if (filters.name && talent.name.toLowerCase().indexOf(filters.name) === -1) return false;
+    return true;
+  }
+
+  function highlightedTalentSet() {
+    if (!filters.build) return null;
+    var b = buildByName(filters.build);
+    return b ? b.talents : null;
+  }
+
+  function updateCounter() {
+    var total = 0;
+    Object.keys(picked).forEach(function (name) {
+      if (!picked[name]) return;
+      var talent = D.TALENTS.filter(function (t) { return t.name === name; })[0];
+      if (talent && talent.tier > 0) total += 1;
+    });
+    document.getElementById("pointsTicked").textContent = total;
+
+    var next = D.TIERS.filter(function (p) { return p > 0 && p > total; })[0];
+    var hint = document.getElementById("nextTierHint");
+    if (next !== undefined) {
+      hint.textContent = (next - total) + " more point" + (next - total === 1 ? "" : "s") + " to reach the " + D.TIER_LABEL[next] + " tier.";
+    } else {
+      hint.textContent = "You've ticked enough to reach every tier (17+).";
+    }
+  }
+
+  function render() {
+    var rows = D.TALENTS.filter(matchesFilters).slice();
+    var highlightSet = highlightedTalentSet();
+
+    var body = document.getElementById("talentBody");
+    body.innerHTML = "";
+    rows.forEach(function (talent) {
+      var tr = document.createElement("tr");
+      if (highlightSet && highlightSet.indexOf(talent.name) !== -1) tr.className = "highlighted";
+
+      var pickTd = document.createElement("td");
+      pickTd.className = "pick";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!picked[talent.name];
+      cb.addEventListener("change", function () {
+        picked[talent.name] = cb.checked;
+        updateCounter();
+      });
+      pickTd.appendChild(cb);
+      tr.appendChild(pickTd);
+
+      tr.appendChild(textNode("td", "name", talent.name));
+      tr.appendChild(textNode("td", "tier", D.TIER_LABEL[talent.tier]));
+      tr.appendChild(textNode("td", null, talent.effect));
+
+      body.appendChild(tr);
+    });
+
+    document.getElementById("rowCount").textContent = rows.length + " of " + D.TALENTS.length + " talents";
+  }
+
+  function renderBuildsList() {
+    var list = document.getElementById("buildsList");
+    list.innerHTML = "";
+    D.BUILDS.forEach(function (b) {
+      var src = D.SOURCES[b.sourceIndex];
+      var div = document.createElement("div");
+      div.className = "build-section";
+      div.appendChild(textNode("h3", null, b.name));
+      var meta = document.createElement("p");
+      meta.className = "build-meta";
+      meta.appendChild(document.createTextNode(b.attribution + " Source: "));
+      var a = document.createElement("a");
+      a.href = src.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = src.name;
+      meta.appendChild(a);
+      div.appendChild(meta);
+      b.talents.forEach(function (name) {
+        div.appendChild(textNode("span", "build-chip", name));
+      });
+      list.appendChild(div);
+    });
+  }
+
+  function wireBuildFilterOptions() {
+    var sel = document.getElementById("buildFilter");
+    D.BUILDS.forEach(function (b) {
+      var opt = document.createElement("option");
+      opt.value = b.name;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById("nameFilter").addEventListener("input", function (e) {
+    filters.name = e.target.value.toLowerCase();
+    render();
+  });
+  document.getElementById("tierFilter").addEventListener("change", function (e) {
+    filters.tier = e.target.value;
+    render();
+  });
+  document.getElementById("buildFilter").addEventListener("change", function (e) {
+    filters.build = e.target.value;
+    render();
+  });
+  document.getElementById("clearPicks").addEventListener("click", function () {
+    picked = {};
+    render();
+    updateCounter();
+  });
+
+  var notice = document.getElementById("dataNotice");
+  notice.appendChild(textNode("strong", null, "Data notice: "));
+  notice.appendChild(document.createTextNode(
+    "all 41 talents below are transcribed directly from gnorp.wiki.gg, not invented or inferred. " +
+    "Two gaps in the source are disclosed rather than guessed: which single talent in each tier " +
+    "is the \"free\" one, and whether any overall maximum point total exists beyond the last " +
+    "unlock threshold (17). See the Sources section below for the full detail."
+  ));
+
+  document.getElementById("fetchedDate").textContent = D.FETCHED;
+  var list = document.getElementById("sourceList");
+  D.SOURCES.forEach(function (s) {
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = s.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = s.name;
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+
+  wireBuildFilterOptions();
+  renderBuildsList();
+  render();
+  updateCounter();
+
+  (function selfTest() {
+    var el = document.getElementById("selfTest");
+    var pass = 0, total = 6;
+    if (D.TALENTS.length === 41) pass++;
+    if (D.TALENTS.filter(function (t) { return t.tier === 0; }).length === 5) pass++;
+    [2, 5, 8, 11, 14, 17].forEach(function () {});
+    var allTiersHaveSix = [2, 5, 8, 11, 14, 17].every(function (p) {
+      return D.TALENTS.filter(function (t) { return t.tier === p; }).length === 6;
+    });
+    if (allTiersHaveSix) pass++;
+    var allBuildTalentsExist = D.BUILDS.every(function (b) {
+      return b.talents.every(function (name) {
+        return D.TALENTS.some(function (t) { return t.name === name; });
+      });
+    });
+    if (allBuildTalentsExist) pass++;
+    var bannedWords = ["best", "optimal", "strongest", "guaranteed", "approved", "certified", "compliant", "safe", "s-tier"];
+    var visibleText = (document.querySelector("main").textContent + " " + document.querySelector("footer").textContent).toLowerCase();
+    if (bannedWords.every(function (bw) { return visibleText.indexOf(bw) === -1; })) pass++;
+    if (document.getElementById("talentBody").children.length > 0) pass++;
+    el.textContent = "self-test: " + pass + "/" + total + " known-answer scenarios passed";
+    el.className = "self-test " + (pass === total ? "ok" : "bad");
+  })();
+})();
+</script>
+</body>
+</html>
